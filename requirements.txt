@@ -1,5 +1,7 @@
-flask
-openai
-twilio
 python-dotenv
 transformers
+greenapi
+transformers
+torch
+requests
+
