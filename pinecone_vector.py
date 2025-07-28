@@ -86,7 +86,7 @@ def concurrent_embed_documents(embed_model, documents, batch_size=100, max_worke
     return all_embeddings, all_contents
 
 # Load documents from PDF
-pdf_dir_path = "/content/drive/MyDrive/Data"
+pdf_dir_path = "./data" #"/content/drive/MyDrive/Data"
 documents = []
 for filename in os.listdir(pdf_dir_path):
     if filename.endswith('.pdf'):
