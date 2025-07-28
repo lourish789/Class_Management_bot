@@ -3,6 +3,6 @@ services:
     name: teacher-coach-bot
     env: python
     plan: free
-    buildCommand: "bot.run_forever()"
+    buildCommand: ""
     startCommand: python main.py
     autoDeploy: true
