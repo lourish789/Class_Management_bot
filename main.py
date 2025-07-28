@@ -49,6 +49,57 @@ class TeacherAI:
     def __init__(self, llm, system_prompt_template):
         self.llm = llm
         self.system_prompt_template = system_prompt_template
+import os
+import asyncio
+import nest_asyncio
+from datetime import datetime
+import re
+from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain.chains import LLMChain
+from langchain.memory import ChatMessageHistory, ConversationBufferMemory
+from pinecone import Pinecone
+from whatsapp_chatbot_python import GreenAPIBot, Notification
+
+# Apply nest_asyncio patch
+nest_asyncio.apply()
+
+# Get API keys
+PINECONE_API_KEY = "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg"
+GOOGLE_API_KEY = "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw"
+
+# Check for missing API keys
+if not PINECONE_API_KEY:
+    raise ValueError("Pinecone API key is missing.")
+if not GOOGLE_API_KEY:
+    raise ValueError("Google API key is missing.")
+
+# Initialize Pinecone and embedding model
+pc = Pinecone(api_key=PINECONE_API_KEY)
+pinecone_index = pc.Index("coach")
+embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GOOGLE_API_KEY)
+
+# Initialize Google Generative AI
+llm = ChatGoogleGenerativeAI(
+    model="gemini-pro",
+    google_api_key=GOOGLE_API_KEY,
+    temperature=0.7,
+    max_tokens=1000
+)
+
+# Define system prompt template
+system_prompt_template = """
+Your name is Nigerian Teaching Coach Chatbot. You are a professional teaching expert for Nigerian schools effective in class management, student handling, stress handling and teaching responsibilities. Answer questions very very briefly and accurately. Use the following information to answer the user's question:
+
+{doc_content}
+
+Provide very brief accurate and helpful health response based on the provided information and your expertise. But explain concisely if need be
+"""
+
+class TeacherAI:
+    def __init__(self, llm, system_prompt_template):
+        self.llm = llm
+        self.system_prompt_template = system_prompt_template
 
         # Create prompt template
         self.prompt = ChatPromptTemplate.from_messages([
@@ -142,52 +193,116 @@ def message_handler(notification: Notification) -> None:
         "Once I know that, I can provide more personalized support for your classroom journey! 🏫💡"
     )
     notification.answer(welcome_message)
-from flask import Flask, request
-from twilio.twiml.messaging_response import MessagingResponse
-from model_inference import get_coach_response
-from dotenv import load_dotenv
-import os
-import time
 
-load_dotenv()
+@bot.router.message()
+def ai_coaching_handler(notification: Notification) -> None:
+    try:
+        message_data = notification.event.get("messageData", {})
+        text_data = message_data.get("textMessageData", {})
+        user_message = text_data.get("textMessage", "")
+        chat_id = notification.chat
 
-app = Flask(__name__)
+        if not user_message.strip():
+            notification.answer("I didn't catch that. Could you say that again? 🤔")
+            return
 
-# Session memory store: {sender_phone_number: list of messages}
-session_store = {}
+        # Initialize history if new user
+        if chat_id not in conversation_histories:
+            conversation_histories[chat_id] = {"history": [], "name": None, "class": None}
 
-# Number of messages to retain in session history
-SESSION_LIMIT = 5
+        teacher_info = conversation_histories[chat_id]
 
-@app.route('/whatsapp', methods=['POST'])
-def whatsapp_bot():
-    incoming_msg = request.values.get('Body', '').strip()
-    sender = request.values.get('From', '')
+        # If teacher name and class not provided, extract them
+        if teacher_info["name"] is None or teacher_info["class"] is None:
+            name, class_taught = extract_name_and_class(user_message)
 
-    if not sender or not incoming_msg:
-        return "No input received"
+            if name and class_taught:
+                teacher_info["name"] = name.title()
+                teacher_info["class"] = class_taught.title()
 
-    # Initialize or update session history
-    if sender not in session_store:
-        session_store[sender] = [{"role": "system", "content": "You are a Nigerian classroom management coach who provides practical advice to teachers."}]
-    
-    # Append user message to session
-    session_store[sender].append({"role": "user", "content": incoming_msg})
+                notification.answer(
+                    f"Thank you, {teacher_info['name']}! I've saved that you teach {teacher_info['class']}.\n"
+                    "How can I support you today with your class or teaching journey?"
+                )
+                return
+            else:
+                notification.answer("Please tell me your name and class like this: `My name is James and I teach JSS 1` 😊")
+                return
 
-    # Limit session length
-    if len(session_store[sender]) > SESSION_LIMIT * 2:
-        session_store[sender] = [session_store[sender][0]] + session_store[sender][-SESSION_LIMIT*2:]
+        # Add user message to conversation history
+        teacher_info["history"].append({
+            "role": "user",
+            "message": user_message,
+            "timestamp": datetime.now().isoformat()
+        })
 
-    # Get assistant response using current context
-    reply_text = get_coach_response(session_store[sender])
+        # Trim history to last 20 messages
+        if len(teacher_info["history"]) > 20:
+            teacher_info["history"] = teacher_info["history"][-20:]
 
-    # Append assistant's reply to session
-    session_store[sender].append({"role": "assistant", "content": reply_text})
+        # Embed the user's question
+        query_embed = embed_model.embed_query(user_message)
+        query_embed = [float(val) for val in query_embed]
 
-    # Return via WhatsApp
-    response = MessagingResponse()
-    response.message(reply_text)
-    return str(response)
+        # Query Pinecone for relevant documents
+        results = pinecone_index.query(
+            vector=query_embed,
+            top_k=5,
+            include_values=False,
+            include_metadata=True
+        )
 
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+        # Extract document contents
+        doc_contents = []
+        for match in results.get('matches', []):
+            text = match['metadata'].get('text', '')
+            if text:
+                doc_contents.append(text)
+
+        doc_content = "\n".join(doc_contents) if doc_contents else "No additional information found."
+
+        # Create enhanced prompt with context
+        enhanced_prompt = f"""
+        You are Coach bot, a supportive and highly experienced AI teaching coach for Nigerian teachers, an initiative of Schoolinka.
+        Your goal is to provide practical, empathetic, and contextually relevant advice for Nigerian classrooms, considering challenges like large class sizes, limited resources, and power outages.
+        Reference the provided information where appropriate, but also use your general teaching expertise.
+        Keep your responses concise and actionable, providing clear examples relevant to the Nigerian educational setting.
+        Always maintain a positive and encouraging tone.
+
+        Teacher Information:
+        - Name: {teacher_info['name']}
+        - Class: {teacher_info['class']}
+
+        Relevant Information:
+        {doc_content}
+
+        Teacher's Question: {user_message}
+        """
+
+        # Generate AI response
+        ai_response = teacher_ai.generate_coaching_response(enhanced_prompt, teacher_info["history"])
+
+        # Personalize response with teacher name
+        if teacher_info["name"] and not ai_response.startswith(teacher_info["name"]):
+            ai_response = f"{teacher_info['name']}, {ai_response}"
+
+        # Add AI response to history
+        teacher_info["history"].append({
+            "role": "assistant",
+            "message": ai_response,
+            "timestamp": datetime.now().isoformat()
+        })
+
+        # Trim history again after adding assistant's response
+        if len(teacher_info["history"]) > 20:
+            teacher_info["history"] = teacher_info["history"][-20:]
+
+        notification.answer(ai_response)
+
+    except Exception as e:
+        print(f"Error in AI handler: {e}")
+        notification.answer("Oops, something went wrong. Please try again shortly. 💡")
+
+if __name__ == "__main__":
+    print("Starting WhatsApp Teaching Coach Bot...")
+    bot.run_forever()
