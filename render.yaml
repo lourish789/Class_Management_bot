@@ -1,8 +1,8 @@
 services:
-  - type: web
+  - type: Background Worker
     name: teacher-coach-bot
     env: python
     plan: free
-    buildCommand: ""
+    buildCommand: "bot.run_forever()"
     startCommand: python main.py
     autoDeploy: true
