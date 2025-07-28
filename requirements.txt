@@ -3,9 +3,7 @@ torch
 requests
 langchain==0.1.13 
 langchain-community==0.0.29 
-langchain-google-genai 
-pinecone-client==3.0.2 
-python-dotenv==1.0.0 
+langchain-google-genai  
 pypdf 
 tqdm==4.66.2 
 nest-asyncio==1.6.0 
