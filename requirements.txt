@@ -5,12 +5,12 @@ langchain-community==0.0.29
 pypdf 
 tqdm==4.66.2 
 flask==2.3.3
-langchain==0.0.350
+langchain==0.1.13
 langchain-google-genai==1.0.10
 pinecone
-whatsapp-chatbot-python==0.0.8
-nest-asyncio==1.5.8
-google-generativeai==0.3.2
+whatsapp-chatbot-python
+nest-asyncio==1.6.0
+google-generativeai==0.5.0
 asyncio==3.4.3
 python-dotenv==1.0.0
 gunicorn==21.2.0
