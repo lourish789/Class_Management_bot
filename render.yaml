@@ -1,22 +1,11 @@
 services:
-  - type: Background Worker
-    name: teacher-coach-bot
-    env: python
-    plan: free
-    buildCommand: ""
-    startCommand: python main.py
-    autoDeploy: true
-
-
-
-    
-services:
-  - type: web
+    type: web
     name: whatsapp-coach-bot
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT main:app
-    plan: starter
+    plan: free
+    autoDeploy: true
     envVars:
       - key: PINECONE_API_KEY
         sync: false
