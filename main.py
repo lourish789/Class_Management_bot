@@ -5,7 +5,6 @@ from datetime import datetime
 import re
 from flask import Flask, request, jsonify
 import threading
-import requests
 import json
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, HumanMessagePromptTemplate
@@ -17,55 +16,41 @@ from whatsapp_chatbot_python import GreenAPIBot, Notification
 # Apply nest_asyncio patch
 nest_asyncio.apply()
 
-# Flask app initialization
+# Initialize Flask app
 app = Flask(__name__)
 
-# Get API keys from environment variables for security
-PINECONE_API_KEY = "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg" #os.getenv("PINECONE_API_KEY")
-GOOGLE_API_KEY = "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw" #os.getenv("GOOGLE_API_KEY")
-GREEN_API_ID = "7105287498" #os.getenv("GREEN_API_ID")
-GREEN_API_TOKEN = "0017430b3b204cf28ac14a41cc5ede0ce8e5a68d91134d5fbe" #os.getenv("GREEN_API_TOKEN")
+# Get API keys from environment variables
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw")
+GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE", "7105287498")
+GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN", "0017430b3b204cf28ac14a41cc5ede0ce8e5a68d91134d5fbe")
 
 # Check for missing API keys
 if not PINECONE_API_KEY:
-    raise ValueError("Pinecone API key is missing from environment variables.")
+    raise ValueError("Pinecone API key is missing.")
 if not GOOGLE_API_KEY:
-    raise ValueError("Google API key is missing from environment variables.")
-if not GREEN_API_ID:
-    raise ValueError("Green API ID is missing from environment variables.")
-if not GREEN_API_TOKEN:
-    raise ValueError("Green API Token is missing from environment variables.")
+    raise ValueError("Google API key is missing.")
 
 # Initialize Pinecone and embedding model
-try:
-    pc = Pinecone(api_key=PINECONE_API_KEY)
-    pinecone_index = pc.Index("coach")
-    embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GOOGLE_API_KEY)
-    print("Pinecone and embeddings initialized successfully")
-except Exception as e:
-    print(f"Error initializing Pinecone: {e}")
-    raise
+pc = Pinecone(api_key=PINECONE_API_KEY)
+pinecone_index = pc.Index("coach")
+embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=GOOGLE_API_KEY)
 
 # Initialize Google Generative AI
-try:
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-exp",  # Updated to a more stable model
-        google_api_key=GOOGLE_API_KEY,
-        temperature=0.7,
-        max_tokens=800  # Reduced for more concise responses
-    )
-    print("Google Generative AI initialized successfully")
-except Exception as e:
-    print(f"Error initializing Google AI: {e}")
-    raise
+llm = ChatGoogleGenerativeAI(
+    model="gemini-2.5-flash",
+    google_api_key=GOOGLE_API_KEY,
+    temperature=0.7,
+    max_tokens=1000
+)
 
 # Define system prompt template
 system_prompt_template = """
-Your name is Nigerian Teaching Coach Chatbot. You are a professional teaching expert for Nigerian schools effective in class management, student handling, stress handling and teaching responsibilities. Answer questions very briefly and accurately. Use the following information to answer the user's question:
+Your name is Nigerian Teaching Coach Chatbot. You are a professional teaching expert for Nigerian schools effective in class management, student handling, stress handling and teaching responsibilities. Answer questions very very briefly and accurately. Use the following information to answer the user's question:
 
 {doc_content}
 
-Provide brief accurate and helpful response based on the provided information and your expertise. Avoid using excessive quotation marks or markdown formatting. Keep responses natural and conversational.
+Provide very brief accurate and helpful response based on the provided information and your expertise. But explain concisely if need be. Never use asterisks (*) in your responses.
 """
 
 class TeacherAI:
@@ -87,11 +72,11 @@ class TeacherAI:
             verbose=False
         )
 
-    def generate_coaching_response(self, user_input, conversation_history, doc_content=""):
+    def generate_coaching_response(self, user_input, conversation_history):
         try:
             # Convert conversation history to langchain format
             chat_history = []
-            for entry in conversation_history[-6:]:  # Reduced to last 6 entries for better performance
+            for entry in conversation_history[-10:]:  # Use last 10 entries
                 if entry["role"] == "user":
                     chat_history.append(("human", entry["message"]))
                 elif entry["role"] == "assistant":
@@ -101,86 +86,28 @@ class TeacherAI:
             response = self.chain.run(
                 input=user_input,
                 chat_history=chat_history,
-                doc_content=doc_content
+                doc_content=""  # Will be filled from Pinecone results
             )
 
-            # Clean up response - remove excessive quotation marks and markdown
-            cleaned_response = self.clean_response(response.strip())
-            return cleaned_response
+            # Remove asterisks from response
+            response = response.replace("*", "")
+            return response.strip()
 
         except Exception as e:
             print(f"Error generating response: {e}")
             return "I'm having trouble processing your request right now. Please try again."
 
-    def clean_response(self, response):
-        """Clean up response to remove excessive formatting"""
-        # Remove excessive quotation marks around words
-        response = re.sub(r'`([^`]+)`', r'\1', response)  # Remove backticks
-        response = re.sub(r'\*\*([^*]+)\*\*', r'\1', response)  # Remove bold markdown
-        response = re.sub(r'\*([^*]+)\*', r'\1', response)  # Remove italic markdown
-        response = re.sub(r'"([^"]+)"', r'\1', response)  # Remove unnecessary quotes
-        response = re.sub(r'#{1,6}\s*', '', response)  # Remove markdown headers
-
-        # Clean up multiple spaces and newlines
-        response = re.sub(r'\n\s*\n', '\n\n', response)
-        response = re.sub(r'\s+', ' ', response)
-
-        return response.strip()
-
 # Initialize the teacher AI
 teacher_ai = TeacherAI(llm, system_prompt_template)
 
-# Green API helper class for sending messages
-class GreenAPIHelper:
-    def __init__(self, api_id, api_token):
-        self.api_id = api_id
-        self.api_token = api_token
-        self.base_url = f"https://7103.api.greenapi.com/waInstance{api_id}"
-
-    def send_message(self, chat_id, message):
-        """Send message via Green API"""
-        try:
-            url = f"{self.base_url}/sendMessage/{self.api_token}"
-
-            payload = {
-                "chatId": chat_id,
-                "message": message
-            }
-
-            headers = {
-                'Content-Type': 'application/json'
-            }
-
-            response = requests.post(url, json=payload, headers=headers, timeout=30)
-
-            if response.status_code == 200:
-                print(f"Message sent successfully to {chat_id}")
-                return True
-            else:
-                print(f"Failed to send message: {response.status_code}, {response.text}")
-                return False
-
-        except Exception as e:
-            print(f"Error sending message: {e}")
-            return False
-
-# Initialize Green API helper
-green_api_helper = GreenAPIHelper(GREEN_API_ID, GREEN_API_TOKEN)
-
-# Initialize WhatsApp bot with error handling
-try:
-    bot = GreenAPIBot(
-        GREEN_API_ID, GREEN_API_TOKEN,
-        debug_mode=True,
-        bot_debug_mode=True
-    )
-    print("WhatsApp bot initialized successfully")
-except Exception as e:
-    print(f"Error initializing WhatsApp bot: {e}")
-    bot = None
+# Initialize WhatsApp bot
+bot = GreenAPIBot(
+    GREEN_API_ID_INSTANCE, GREEN_API_TOKEN,
+    debug_mode=True, bot_debug_mode=True
+)
 
 # Store conversation history and teacher info for each user
-conversation_histories = {}
+conversation_histories = {}  # chat_id: {"history": [...], "name": "Teacher", "class": "Primary 3", "initialized": False}
 
 def extract_name_and_class(message):
     """Extract teacher name and class from message"""
@@ -206,17 +133,32 @@ def extract_name_and_class(message):
 
     return None, None
 
-def should_add_name_prefix(teacher_info, message_count):
-    """Determine if we should add the teacher's name to the response"""
-    if not teacher_info.get("initialized", False):
-        return True
-    return message_count % 15 == 0  # Less frequent name usage
+def clean_response(response, teacher_name=None):
+    """Clean response by removing asterisks and unnecessary name repetitions"""
+    # Remove asterisks
+    response = response.replace("*", "")
 
-def process_message(chat_id, user_message):
-    """Process incoming message and generate response"""
+    # Remove repetitive mentions of teacher name if it appears more than once
+    if teacher_name:
+        # Count occurrences of teacher name
+        name_count = response.lower().count(teacher_name.lower())
+        if name_count > 1:
+            # Keep only the first occurrence
+            response = response.replace(f"{teacher_name}, ", "", name_count - 1)
+
+    return response.strip()
+
+@bot.router.message()
+def message_handler(notification: Notification) -> None:
     try:
+        message_data = notification.event.get("messageData", {})
+        text_data = message_data.get("textMessageData", {})
+        user_message = text_data.get("textMessage", "")
+        chat_id = notification.chat
+
         if not user_message.strip():
-            return "I didn't catch that. Could you say that again?"
+            notification.answer("I didn't catch that. Could you say that again? 🤔")
+            return
 
         # Initialize history if new user
         if chat_id not in conversation_histories:
@@ -224,44 +166,57 @@ def process_message(chat_id, user_message):
                 "history": [],
                 "name": None,
                 "class": None,
-                "initialized": False,
-                "message_count": 0
+                "initialized": False
             }
 
         teacher_info = conversation_histories[chat_id]
-        teacher_info["message_count"] += 1
 
-        # If not initialized, show welcome and try to extract info
+        # If this is the first interaction, show welcome message
         if not teacher_info["initialized"]:
+            teacher_info["initialized"] = True
+
+            # Check if user already provided name and class in first message
             name, class_taught = extract_name_and_class(user_message)
 
             if name and class_taught:
                 teacher_info["name"] = name.title()
                 teacher_info["class"] = class_taught.title()
-                teacher_info["initialized"] = True
 
-                return (
-                    f"Great to meet you, {teacher_info['name']}! I've noted that you teach {teacher_info['class']}.\n\n"
-                    "I'm Coach bot, your AI teaching assistant from Schoolinka. "
-                    "I'm here to help with classroom management, student engagement, lesson planning, and any teaching challenges you face.\n\n"
-                    "How can I support you today?"
+                welcome_response = (
+                    f"Hello! I'm Coach bot, your friendly AI teaching coach assistant.\n\n"
+                    f"An initiative of Schoolinka. For more information: https://www.schoolinka.com/\n\n"
+                    f"Nice to meet you! I've noted that you teach {teacher_info['class']}. "
+                    f"How can I support you today with your classroom or teaching journey? 🏫💡"
                 )
+                notification.answer(welcome_response)
+                return
             else:
-                return (
-                    "Hello! I'm Coach bot, your friendly AI teaching coach assistant from Schoolinka.\n\n"
-                    "Before we dive in, could you please tell me your name and the class you teach? "
+                welcome_message = (
+                    "👋 Hello! I'm Coach bot, your friendly AI teaching coach assistant.\n\n"
+                    "An initiative of Schoolinka. For more information: https://www.schoolinka.com/\n\n"
+                    "Before we begin, could you please tell me your name and the class you teach? "
                     "For example: My name is Sarah and I teach Primary 3.\n\n"
-                    "This helps me provide more personalized support for your classroom!\n\n"
-                    "Or feel free to ask me any teaching question right away!"
+                    "Once I know that, I can provide more personalized support for your classroom journey! 🏫💡"
                 )
+                notification.answer(welcome_message)
+                return
 
-        # For initialized users, process normally but try to extract info if missing
-        if (teacher_info["name"] is None or teacher_info["class"] is None) and not teacher_info["initialized"]:
+        # If teacher name and class not provided, try to extract them
+        if teacher_info["name"] is None or teacher_info["class"] is None:
             name, class_taught = extract_name_and_class(user_message)
+
             if name and class_taught:
                 teacher_info["name"] = name.title()
                 teacher_info["class"] = class_taught.title()
-                teacher_info["initialized"] = True
+
+                notification.answer(
+                    f"Thank you! I've saved that you teach {teacher_info['class']}. "
+                    "How can I support you today with your class or teaching journey?"
+                )
+                return
+            else:
+                notification.answer("Please tell me your name and class like this: My name is James and I teach JSS 1 😊")
+                return
 
         # Add user message to conversation history
         teacher_info["history"].append({
@@ -270,46 +225,42 @@ def process_message(chat_id, user_message):
             "timestamp": datetime.now().isoformat()
         })
 
-        # Trim history to last 15 messages for better performance
-        if len(teacher_info["history"]) > 15:
-            teacher_info["history"] = teacher_info["history"][-15:]
+        # Trim history to last 20 messages
+        if len(teacher_info["history"]) > 20:
+            teacher_info["history"] = teacher_info["history"][-20:]
 
-        # Get relevant documents from Pinecone
-        doc_content = ""
-        try:
-            # Embed the user's question
-            query_embed = embed_model.embed_query(user_message)
-            query_embed = [float(val) for val in query_embed]
+        # Embed the user's question
+        query_embed = embed_model.embed_query(user_message)
+        query_embed = [float(val) for val in query_embed]
 
-            # Query Pinecone for relevant documents
-            results = pinecone_index.query(
-                vector=query_embed,
-                top_k=3,  # Reduced for better performance
-                include_values=False,
-                include_metadata=True
-            )
+        # Query Pinecone for relevant documents
+        results = pinecone_index.query(
+            vector=query_embed,
+            top_k=5,
+            include_values=False,
+            include_metadata=True
+        )
 
-            # Extract document contents
-            doc_contents = []
-            for match in results.get('matches', []):
-                text = match['metadata'].get('text', '')
-                if text:
-                    doc_contents.append(text)
+        # Extract document contents
+        doc_contents = []
+        for match in results.get('matches', []):
+            text = match['metadata'].get('text', '')
+            if text:
+                doc_contents.append(text)
 
-            doc_content = "\n".join(doc_contents) if doc_contents else ""
-        except Exception as e:
-            print(f"Error querying Pinecone: {e}")
-            doc_content = ""
+        doc_content = "\n".join(doc_contents) if doc_contents else "No additional information found."
 
         # Create enhanced prompt with context
         enhanced_prompt = f"""
-        You are Coach bot, a supportive and experienced AI teaching coach for Nigerian teachers, an initiative of Schoolinka.
-        Provide practical, empathetic advice for Nigerian classrooms. Keep responses concise and actionable.
-        Always maintain a positive and encouraging tone. Avoid using excessive quotation marks or markdown formatting.
+        You are Coach bot, a supportive and highly experienced AI teaching coach for Nigerian teachers, an initiative of Schoolinka.
+        Your goal is to provide practical, empathetic, and contextually relevant advice for Nigerian classrooms, considering challenges like large class sizes, limited resources, and power outages.
+        Reference the provided information where appropriate, but also use your general teaching expertise.
+        Keep your responses concise and actionable, providing clear examples relevant to the Nigerian educational setting.
+        Always maintain a positive and encouraging tone. Never use asterisks in your responses.
 
         Teacher Information:
-        - Name: {teacher_info.get('name', 'Teacher')}
-        - Class: {teacher_info.get('class', 'Not specified')}
+        - Name: {teacher_info['name']}
+        - Class: {teacher_info['class']}
 
         Relevant Information:
         {doc_content}
@@ -318,12 +269,10 @@ def process_message(chat_id, user_message):
         """
 
         # Generate AI response
-        ai_response = teacher_ai.generate_coaching_response(enhanced_prompt, teacher_info["history"], doc_content)
+        ai_response = teacher_ai.generate_coaching_response(enhanced_prompt, teacher_info["history"])
 
-        # Add name prefix only occasionally
-        if teacher_info.get("name") and should_add_name_prefix(teacher_info, teacher_info["message_count"]):
-            if not ai_response.lower().startswith(teacher_info["name"].lower()):
-                ai_response = f"{teacher_info['name']}, {ai_response}"
+        # Clean the response (remove asterisks and handle name repetition)
+        ai_response = clean_response(ai_response, teacher_info["name"])
 
         # Add AI response to history
         teacher_info["history"].append({
@@ -333,144 +282,114 @@ def process_message(chat_id, user_message):
         })
 
         # Trim history again after adding assistant's response
-        if len(teacher_info["history"]) > 15:
-            teacher_info["history"] = teacher_info["history"][-15:]
+        if len(teacher_info["history"]) > 20:
+            teacher_info["history"] = teacher_info["history"][-20:]
 
-        return ai_response
+        notification.answer(ai_response)
 
     except Exception as e:
-        print(f"Error processing message: {e}")
-        return "Oops, something went wrong. Please try again shortly."
-
-# Handle all messages (only if bot is initialized)
-if bot:
-    @bot.router.message()
-    def ai_coaching_handler(notification: Notification) -> None:
-        try:
-            message_data = notification.event.get("messageData", {})
-            text_data = message_data.get("textMessageData", {})
-            user_message = text_data.get("textMessage", "")
-            chat_id = notification.chat
-
-            if user_message:
-                response = process_message(chat_id, user_message)
-                notification.answer(response)
-
-        except Exception as e:
-            print(f"Error in AI handler: {e}")
-            notification.answer("Oops, something went wrong. Please try again shortly.")
+        print(f"Error in message handler: {e}")
+        notification.answer("Oops, something went wrong. Please try again shortly. 💡")
 
 # Flask routes for webhook and health check
 @app.route('/')
 def health_check():
     return jsonify({
         "status": "healthy",
-        "message": "WhatsApp Teaching Coach Bot is running",
-        "timestamp": datetime.now().isoformat(),
-        "bot_status": "initialized" if bot else "failed_to_initialize"
+        "service": "WhatsApp Teaching Coach Bot",
+        "timestamp": datetime.now().isoformat()
     })
 
-@app.route('/webhook', methods=['POST'])
+#@app.route('/webhook', methods=['POST'])
+#def webhook():
+   # """Handle webhook from Green API"""
+    #try:
+      #  data = request.get_json()
+        #print(f"Webhook received: {data}")
+
+        # Process the webhook data if needed
+        # This endpoint can be used for additional webhook processing
+
+        #return jsonify({"status": "success"}), 200
+    #except Exception as e:
+      #  print(f"Webhook error: {e}")
+       # return jsonify({"error": "Internal server error"}), 500
+
+GREEN_API_URL = "https://class-management-bot.onrender.com/webhook"
+
+app.route('/webhook', methods=['POST'])
 def webhook():
     """Handle incoming webhook from Green API"""
     try:
         data = request.get_json()
-        print(f"Received webhook data: {json.dumps(data, indent=2)}")
 
         if not data:
             return jsonify({"status": "error", "message": "No data received"}), 400
 
-        # Handle incoming message
         if data.get('typeWebhook') == 'incomingMessageReceived':
             message_data = data.get('messageData', {})
-            sender_data = data.get('senderData', {})
-
-            # Extract message details
-            chat_id = sender_data.get('chatId', '')
-            sender = sender_data.get('sender', '')
-
-            # Handle text messages
             text_data = message_data.get('textMessageData', {})
             user_message = text_data.get('textMessage', '')
+            chat_id = data.get('senderData', {}).get('chatId', '')
 
             if user_message and chat_id:
-                print(f"Processing message from {sender}: {user_message}")
-                response = process_message(chat_id, user_message)
+                reply = process_message(chat_id, user_message)
+                send_response(chat_id, reply)
 
-                # Send response back via Green API
-                success = green_api_helper.send_message(chat_id, response)
-
-                if success:
-                    return jsonify({"status": "success", "message": "Message processed and response sent"})
-                else:
-                    return jsonify({"status": "error", "message": "Failed to send response"}), 500
-
-        return jsonify({"status": "success", "message": "Webhook processed"})
+        return jsonify({"status": "success", "message": "Webhook processed"}), 200
 
     except Exception as e:
         print(f"Webhook error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-@app.route('/send_message', methods=['POST'])
-def send_message_endpoint():
-    """Manual endpoint to send messages for testing"""
+
+def send_response(chat_id, message):
+    """
+    Send a message to the user via Green API.
+    """
+    payload = {
+        "chatId": chat_id,
+        "message": message
+    }
+
     try:
-        data = request.get_json()
-        chat_id = data.get('chat_id')
-        message = data.get('message')
-
-        if not chat_id or not message:
-            return jsonify({"status": "error", "message": "chat_id and message are required"}), 400
-
-        success = green_api_helper.send_message(chat_id, message)
-
-        if success:
-            return jsonify({"status": "success", "message": "Message sent"})
+        response = requests.post(GREEN_API_URL, json=payload)
+        if response.status_code == 200:
+            print("Message sent successfully")
         else:
-            return jsonify({"status": "error", "message": "Failed to send message"}), 500
-
+            print(f"Failed to send message: {response.text}")
     except Exception as e:
-        print(f"Send message error: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+        print(f"Error sending message: {e}")
 
-@app.route('/stats')
-def get_stats():
-    """Get bot statistics"""
-    total_users = len(conversation_histories)
-    initialized_users = sum(1 for info in conversation_histories.values() if info.get("initialized", False))
 
+@app.route('/status')
+def bot_status():
+    """Get bot status and statistics"""
     return jsonify({
-        "total_users": total_users,
-        "initialized_users": initialized_users,
-        "active_conversations": total_users,
-        "bot_status": "running" if bot else "not_running"
+        "active_conversations": len(conversation_histories),
+        "bot_status": "running",
+        "timestamp": datetime.now().isoformat()
     })
 
 def run_bot():
     """Run the WhatsApp bot in a separate thread"""
-    if bot:
-        try:
-            print("Starting WhatsApp Teaching Coach Bot...")
-            bot.run_forever()
-        except Exception as e:
-            print(f"Error running bot: {e}")
-    else:
-        print("Bot not initialized, skipping bot thread")
+    try:
+        print("Starting WhatsApp bot...")
+        bot.run_forever()
+    except Exception as e:
+        print(f"Bot error: {e}")
 
 def run_flask():
     """Run Flask app"""
     port = int(os.environ.get('PORT', 5000))
-    print(f"Starting Flask server on port {port}...")
     app.run(host='0.0.0.0', port=port, debug=False)
 
 if __name__ == "__main__":
-    # Start the bot in a separate thread only if bot is initialized
-    if bot:
-        bot_thread = threading.Thread(target=run_bot, daemon=True)
-        bot_thread.start()
-        print("Bot thread started")
-    else:
-        print("Skipping bot thread - using webhook mode only")
+    print("Starting WhatsApp Teaching Coach Bot with Flask...")
 
-    # Run Flask app
+    # Start bot in a separate thread
+    bot_thread = threading.Thread(target=run_bot, daemon=True)
+    bot_thread.start()
+
+    # Start Flask app
     run_flask()
