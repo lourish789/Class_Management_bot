@@ -6,6 +6,7 @@ import re
 from flask import Flask, request, jsonify
 import threading
 import json
+import requests
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 from langchain.chains import LLMChain
@@ -38,7 +39,7 @@ embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_
 
 # Initialize Google Generative AI
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model="gemini-2.0-flash-exp",
     google_api_key=GOOGLE_API_KEY,
     temperature=0.7,
     max_tokens=1000
@@ -100,12 +101,6 @@ class TeacherAI:
 # Initialize the teacher AI
 teacher_ai = TeacherAI(llm, system_prompt_template)
 
-# Initialize WhatsApp bot
-bot = GreenAPIBot(
-    GREEN_API_ID_INSTANCE, GREEN_API_TOKEN,
-    debug_mode=True, bot_debug_mode=True
-)
-
 # Store conversation history and teacher info for each user
 conversation_histories = {}  # chat_id: {"history": [...], "name": "Teacher", "class": "Primary 3", "initialized": False}
 
@@ -148,18 +143,9 @@ def clean_response(response, teacher_name=None):
 
     return response.strip()
 
-@bot.router.message()
-def message_handler(notification: Notification) -> None:
+def process_message(chat_id, user_message):
+    """Process incoming message and generate response"""
     try:
-        message_data = notification.event.get("messageData", {})
-        text_data = message_data.get("textMessageData", {})
-        user_message = text_data.get("textMessage", "")
-        chat_id = notification.chat
-
-        if not user_message.strip():
-            notification.answer("I didn't catch that. Could you say that again? 🤔")
-            return
-
         # Initialize history if new user
         if chat_id not in conversation_histories:
             conversation_histories[chat_id] = {
@@ -188,8 +174,7 @@ def message_handler(notification: Notification) -> None:
                     f"Nice to meet you! I've noted that you teach {teacher_info['class']}. "
                     f"How can I support you today with your classroom or teaching journey? 🏫💡"
                 )
-                notification.answer(welcome_response)
-                return
+                return welcome_response
             else:
                 welcome_message = (
                     "👋 Hello! I'm Coach bot, your friendly AI teaching coach assistant.\n\n"
@@ -198,8 +183,7 @@ def message_handler(notification: Notification) -> None:
                     "For example: My name is Sarah and I teach Primary 3.\n\n"
                     "Once I know that, I can provide more personalized support for your classroom journey! 🏫💡"
                 )
-                notification.answer(welcome_message)
-                return
+                return welcome_message
 
         # If teacher name and class not provided, try to extract them
         if teacher_info["name"] is None or teacher_info["class"] is None:
@@ -209,14 +193,12 @@ def message_handler(notification: Notification) -> None:
                 teacher_info["name"] = name.title()
                 teacher_info["class"] = class_taught.title()
 
-                notification.answer(
+                return (
                     f"Thank you! I've saved that you teach {teacher_info['class']}. "
                     "How can I support you today with your class or teaching journey?"
                 )
-                return
             else:
-                notification.answer("Please tell me your name and class like this: My name is James and I teach JSS 1 😊")
-                return
+                return "Please tell me your name and class like this: My name is James and I teach JSS 1 😊"
 
         # Add user message to conversation history
         teacher_info["history"].append({
@@ -285,11 +267,44 @@ def message_handler(notification: Notification) -> None:
         if len(teacher_info["history"]) > 20:
             teacher_info["history"] = teacher_info["history"][-20:]
 
-        notification.answer(ai_response)
+        return ai_response
 
     except Exception as e:
-        print(f"Error in message handler: {e}")
-        notification.answer("Oops, something went wrong. Please try again shortly. 💡")
+        print(f"Error in process_message: {e}")
+        return "Oops, something went wrong. Please try again shortly. 💡"
+
+def send_message_via_green_api(chat_id, message):
+    """Send message via Green API"""
+    try:
+        url = f"https://api.green-api.com/waInstance{GREEN_API_ID_INSTANCE}/sendMessage/{GREEN_API_TOKEN}"
+        
+        payload = {
+            "chatId": chat_id,
+            "message": message
+        }
+        
+        headers = {
+            'Content-Type': 'application/json'
+        }
+        
+        response = requests.post(url, json=payload, headers=headers)
+        
+        if response.status_code == 200:
+            print(f"Message sent successfully to {chat_id}")
+            return True
+        else:
+            print(f"Failed to send message: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"Error sending message via Green API: {e}")
+        return False
+
+# Initialize WhatsApp bot (for message handling structure)
+bot = GreenAPIBot(
+    GREEN_API_ID_INSTANCE, GREEN_API_TOKEN,
+    debug_mode=True, bot_debug_mode=True
+)
 
 # Flask routes for webhook and health check
 @app.route('/')
@@ -300,67 +315,49 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     })
 
-#@app.route('/webhook', methods=['POST'])
-#def webhook():
-   # """Handle webhook from Green API"""
-    #try:
-      #  data = request.get_json()
-        #print(f"Webhook received: {data}")
-
-        # Process the webhook data if needed
-        # This endpoint can be used for additional webhook processing
-
-        #return jsonify({"status": "success"}), 200
-    #except Exception as e:
-      #  print(f"Webhook error: {e}")
-       # return jsonify({"error": "Internal server error"}), 500
-
-GREEN_API_URL = "https://class-management-bot.onrender.com/webhook"
-
-app.route('/webhook', methods=['POST'])
+@app.route('/webhook', methods=['POST'])
 def webhook():
     """Handle incoming webhook from Green API"""
     try:
         data = request.get_json()
+        print(f"Webhook received: {json.dumps(data, indent=2)}")
 
         if not data:
             return jsonify({"status": "error", "message": "No data received"}), 400
 
+        # Handle incoming message
         if data.get('typeWebhook') == 'incomingMessageReceived':
             message_data = data.get('messageData', {})
-            text_data = message_data.get('textMessageData', {})
-            user_message = text_data.get('textMessage', '')
-            chat_id = data.get('senderData', {}).get('chatId', '')
+            sender_data = data.get('senderData', {})
+            
+            # Extract message details
+            chat_id = sender_data.get('chatId', '')
+            
+            # Handle text messages
+            if 'textMessageData' in message_data:
+                text_data = message_data.get('textMessageData', {})
+                user_message = text_data.get('textMessage', '')
+                
+                if user_message and chat_id:
+                    print(f"Processing message from {chat_id}: {user_message}")
+                    
+                    # Process the message and get response
+                    reply = process_message(chat_id, user_message)
+                    
+                    # Send response back
+                    if reply:
+                        success = send_message_via_green_api(chat_id, reply)
+                        if not success:
+                            print(f"Failed to send reply to {chat_id}")
+                    
+                    return jsonify({"status": "success", "message": "Message processed"}), 200
 
-            if user_message and chat_id:
-                reply = process_message(chat_id, user_message)
-                send_response(chat_id, reply)
-
-        return jsonify({"status": "success", "message": "Webhook processed"}), 200
+        # Handle other webhook types if needed
+        return jsonify({"status": "success", "message": "Webhook received"}), 200
 
     except Exception as e:
         print(f"Webhook error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
-def send_response(chat_id, message):
-    """
-    Send a message to the user via Green API.
-    """
-    payload = {
-        "chatId": chat_id,
-        "message": message
-    }
-
-    try:
-        response = requests.post(GREEN_API_URL, json=payload)
-        if response.status_code == 200:
-            print("Message sent successfully")
-        else:
-            print(f"Failed to send message: {response.text}")
-    except Exception as e:
-        print(f"Error sending message: {e}")
-
 
 @app.route('/status')
 def bot_status():
@@ -368,28 +365,39 @@ def bot_status():
     return jsonify({
         "active_conversations": len(conversation_histories),
         "bot_status": "running",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "green_api_instance": GREEN_API_ID_INSTANCE
     })
 
-def run_bot():
-    """Run the WhatsApp bot in a separate thread"""
+@app.route('/test', methods=['POST'])
+def test_message():
+    """Test endpoint for manual message testing"""
     try:
-        print("Starting WhatsApp bot...")
-        bot.run_forever()
+        data = request.get_json()
+        chat_id = data.get('chat_id', 'test_user')
+        message = data.get('message', 'Hello')
+        
+        response = process_message(chat_id, message)
+        
+        return jsonify({
+            "status": "success",
+            "chat_id": chat_id,
+            "user_message": message,
+            "bot_response": response
+        })
+        
     except Exception as e:
-        print(f"Bot error: {e}")
-
-def run_flask():
-    """Run Flask app"""
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 if __name__ == "__main__":
-    print("Starting WhatsApp Teaching Coach Bot with Flask...")
-
-    # Start bot in a separate thread
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-
-    # Start Flask app
-    run_flask()
+    print("Starting WhatsApp Teaching Coach Bot...")
+    print(f"Green API Instance: {GREEN_API_ID_INSTANCE}")
+    
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Run Flask app
+    app.run(host='0.0.0.0', port=port, debug=False)
