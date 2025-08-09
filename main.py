@@ -276,8 +276,8 @@ def process_message(chat_id, user_message):
 def send_message_via_green_api(chat_id, message):
     """Send message via Green API"""
     try:
-        url = f"https://api.green-api.com/waInstance{GREEN_API_ID_INSTANCE}/sendMessage/{GREEN_API_TOKEN}"
-        
+        #url = f"https://api.green-api.com/waInstance{GREEN_API_ID_INSTANCE}/sendMessage/{GREEN_API_TOKEN}"
+        url = "https://7105.api.greenapi.com/waInstance7105287498/sendMessage/0017430b3b204cf28ac14a41cc5ede0ce8e5a68d91134d5fbe"
         payload = {
             "chatId": chat_id,
             "message": message
