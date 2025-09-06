@@ -3,7 +3,7 @@ import asyncio
 import nest_asyncio
 from datetime import datetime, timedelta
 import re
-import sqlite3
+#import sqlite3
 from contextlib import contextmanager
 from flask import Flask, request, jsonify
 import threading
@@ -17,6 +17,9 @@ from pinecone import Pinecone
 from whatsapp_chatbot_python import GreenAPIBot, Notification
 import logging
 from typing import List, Dict, Optional, Tuple
+import sys
+import pysqlite3
+sys.modules["sqlite3"] = pysqlite3
 
 # Apply nest_asyncio patch
 nest_asyncio.apply()
