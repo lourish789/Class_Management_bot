@@ -15,3 +15,4 @@ asyncio==3.4.3
 python-dotenv==1.0.0
 gunicorn==21.2.0
 sqlite3
+python==3.13
