@@ -39,10 +39,15 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Get API keys from environment variables
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE")
-GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw")
+GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE", "7105287498")
+GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN", "0017430b3b204cf28ac14a41cc5ede0ce8e5a68d91134d5fbe")
+
+#PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+#GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+#GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE")
+#GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN")
 
 # Database configuration
 DB_PATH = "teaching_coach.db"
