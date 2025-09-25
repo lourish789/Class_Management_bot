@@ -18,4 +18,3 @@ pysqlite3-binary
 #python==3.9
 email-validator
 gspread
-google.oauth2.service_account
