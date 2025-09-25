@@ -16,4 +16,5 @@ python-dotenv==1.0.0
 gunicorn==21.2.0
 pysqlite3-binary
 #python==3.9
-#==3.11.9
+email-validator
+gspread
