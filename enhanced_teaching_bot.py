@@ -46,12 +46,12 @@ app = Flask(__name__)
 # Get API keys from environment variables
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY", "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw")
-GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE", "7105287498")
-GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN", "0017430b3b204cf28ac14a41cc5ede0ce8e5a68d91134d5fbe")
+GREEN_API_ID_INSTANCE = os.getenv("GREEN_API_ID_INSTANCE", "7105328354")
+GREEN_API_TOKEN = os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5")
 
 # Google Sheets credentials (you'll need to set this up)
 GOOGLE_SHEETS_CREDENTIALS_FILE = os.getenv("GOOGLE_SHEETS_CREDENTIALS", "credentials.json")
-SPREADSHEET_ID = os.getenv("SPREADSHEET_ID", "your_spreadsheet_id_here")
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID", "116616118324951765726")
 
 # Database configuration
 DB_PATH = "teaching_coach.db"
