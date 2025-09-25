@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "just-rhythm-472007-n6",
+  "private_key_id": "867788f97189f77f31e4e12acf70f74d7bd751d8",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQC7pl0nEWGRN/YD\nzsGSb0zbeZujHm18LisIUEkJr+WPLHUkbWWFr7BtcI43Y+Xs6cnRmv9AhNDO9Lzm\nsPe0JfTcjA8BRG8p59cPDv6pFcv8xT07LstCl1JbhuruZbbUuqD+CjUb3fGlRo1O\n9iIotD5PYKL/MQBngwVLonl8vY9M8SAY3TGGte2kXqT1B51Aw4ufcGnnB45qrcLV\nK/LN39FEd/AKkTQON4AhfhN96vn4plIARQ7eyZouZT/+2MTN2TO3EN2NCwZ5+Y3q\nSIUP8OB+vCtGTOQxn1+zQ1ytidGIvBr8FHx19iyQHi6f5AmWyj+p8gokLpRUH0tH\njGQvDTn/AgMBAAECgf99Id9KMnDzLbuZ2euaWm0yYTTW5ppYYX+EgDkO7Y79mLTb\nWtA0cSwob796o2+L+3p7gTVwuFda7PumUGURvhts2izRFIVXaDL/zaKFyEyT86XG\nA90XMy2ARdKawlu9fRhf6Bs6YZb6qdxMXL7sGCY+XiMANMKY5VdcMPJW4e8CQKqC\nPJLw2SxOkGudE+YkAlRYHiB/h7kS5oVKTzhXp2P71hjWJdf8krdC4PT8Fq/7a5oT\nJ+fI45fY14xI5nS2QV6l5Q31dxAmEtawnE4DUkDhYTz3uo8/VMKOzRtXveCsdNp/\nrrvDMSWBS4LWOb2CQ1gbrLcmV/EuIVpCybJn9BECgYEA3k0UCMk1FmUHxZHgDSfW\nDSPd2IwLOTVr2tf/zquKv3MyeLo7eowvwxNyq6LYjXOepuArJ/yHZ1i++bEgmcVJ\nFLoJD4IheYL2TWWaFVyfTy7gERh57MyjanF7u+wANEqNNl4PzKny9m37L3xWCB93\nj2bxxwkM5zrCvDZq14fVvU8CgYEA2BiP+ZL5Ywyc079dgQKHk0RrdAhKH4NuGnyb\nFA0bGHoqZP3+7L0k+MGMz0mtpIwL0oBHMFOMxXt8KmEqVPro8jRhPZO/9XzG0M7n\nKL+DjCx6gpy5r2y6+d0DbplK7Kmk5ghIi2RmZ7HqV4bJp5X3htZNmptGWqdNFYtd\nRrDBbFECgYACQzCQAlQ6/R4+IYTxPVWNXq8UVCCNHYESgh5FYTORTT/XQLX4QlL+\nHkWNf6PKlMGpmyB1ULmkEKAo9GeLiRl8T4RmFwH2NaICGaWe0AmDCcwYAHLFOTP0\nkmEbAYTjA1s6kWyBvb0OSwJCcnaBsKhL2lVdnDb4Z32x4q/lr6k6OwKBgQC1MMsv\nwXuYAJBSv8dAEAXrhlfuv7CfAc3FKavCQUbx3CVF7u7cQ7AHYAqYGDgfm0miY+rM\n65FCWMsAod4jyQqfYyoRvpwa01fE52dNdF9xni3O7GiJXcrdDOL+zkvTal8YfeON\n9U4kLjrGzv6wpP8aMQB63S09f8ATi3pXdoeIMQKBgHoN40tRg/3X7tVzbA/9UIcO\nWIXdrMPI1mg3SaEb7zlAGeWtrklsuUUaiFe/OY0MDfvTFOhxGtWn+wLgXsAe4RIz\nRtUd951zXmAasxLhRacY31yyj9+r08riAif7950BLAbcjD3acVklQs8HrT7uhjiC\njHiNikeEtBKTgkTBUsA7\n-----END PRIVATE KEY-----\n",
+  "client_email": "datastore@just-rhythm-472007-n6.iam.gserviceaccount.com",
+  "client_id": "116616118324951765726",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/datastore%40just-rhythm-472007-n6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
