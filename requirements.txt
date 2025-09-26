@@ -18,3 +18,7 @@ pysqlite3-binary
 #python==3.9
 email-validator
 gspread
+sqlite3
+pinecone-client
+google-auth
+   
