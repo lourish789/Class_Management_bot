@@ -600,7 +600,7 @@ class EnhancedTeacherAI:
                     
                     if text:
                         # Truncate for conciseness
-                        text_short = text[:200] + "..." if len(text) > 200 else text
+                        text_short = text[:150] + "..." if len(text) > 150 else text
                         doc_contents.append(text_short)
                         sources.append(source)
 
