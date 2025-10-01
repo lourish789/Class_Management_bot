@@ -56,6 +56,26 @@ if not all([CONFIG['PINECONE_API_KEY'], CONFIG['GOOGLE_API_KEY'],
             CONFIG['GREEN_API_ID'], CONFIG['GREEN_API_TOKEN']]):
     raise ValueError("Missing required API keys")
 
+import gspread
+
+# Authenticate using your service account credentials.json
+gc = gspread.service_account(filename="credentials.json")
+
+# Open your Google Sheet by its ID (from the URL)
+sh = gc.open_by_key("1H8HKj8sIdD8mPEsR8x32qIprEa_jr6UDfdUU50IjkHk") # e.g., 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms
+
+# Select the first sheet (or use .worksheet("SheetName"))
+worksheet = sh.Sheet1
+
+# Data to append (e.g., user message and chatbot response)
+data_to_add = [user_message, chatbot_response]
+
+# Append the data as a new row
+worksheet.append_row(data_to_add)
+
+
+
+
 # Initialize services
 try:
     pc = Pinecone(api_key=CONFIG['PINECONE_API_KEY'])
@@ -504,6 +524,26 @@ def health():
         "service": "AI Coach - Schoolinka",
         "timestamp": datetime.now().isoformat()
     })
+
+#from flask import Flask, request, jsonify
+
+#app = Flask(__name__)
+
+@app.route('/webhook', methods=['POST'])
+def handle_webhook():
+    notification = request.get_json()
+    
+    # Immediately acknowledge the webhook
+    # Then, process the data (e.g., add to Sheets) in the background if it might be slow
+    try:
+        # ... (Your code to extract the message and response) ...
+        # ... (Your code to update Google Sheets) ...
+        print("Data successfully written to Sheets")
+    except Exception as e:
+        print(f"Error writing to Sheets: {e}")
+    
+    # Always return a 200 to Green API
+    return jsonify({'status': 'ok'}), 200
 
 
 @app.route('/webhook', methods=['POST'])
