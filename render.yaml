@@ -1,10 +1,10 @@
 services:
-    type: web
+  - type: web
     name: whatsapp-coach-bot
-    env: python
-    buildCommand: apt-get update && apt-get install -y portaudio19-dev && pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT main:app
+    runtime: python
     plan: free
+    buildCommand: "apt-get update && apt-get install -y portaudio19-dev && pip install -r requirements.txt"
+    startCommand: "gunicorn --bind 0.0.0.0:$PORT main:app"
     autoDeploy: true
     envVars:
       - key: PINECONE_API_KEY
@@ -15,5 +15,3 @@ services:
         sync: false
       - key: GREEN_API_TOKEN
         sync: false
-      - key: PYTHON_VERSION
-        value: 3.13.9
