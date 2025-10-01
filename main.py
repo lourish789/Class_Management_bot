@@ -24,6 +24,7 @@ import speech_recognition as sr
 from pydub import AudioSegment
 import tempfile
 
+
 # Fix SQLite and apply async patch
 sys.modules["sqlite3"] = pysqlite3
 nest_asyncio.apply()
