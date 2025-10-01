@@ -35,7 +35,7 @@ nest-asyncio==1.5.8
 
 # Database
 pysqlite3==0.5.2
-pysqlite3-binary==0.5.2
+#pysqlite3-binary==0.5.2
 
 # AI and ML
 langchain==0.1.0
