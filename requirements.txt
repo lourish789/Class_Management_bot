@@ -44,7 +44,7 @@ SpeechRecognition
 #==3.10.0
 pydub
 #==0.25.1
-Pillow==10.1.0
+#Pillow==10.1.0
 PIL
 #PyAudio
 #==0.2.14
