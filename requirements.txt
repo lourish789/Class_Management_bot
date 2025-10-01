@@ -1,24 +1,71 @@
-transformers
-torch
-requests
-langchain-community==0.0.29   
-pypdf 
-tqdm==4.66.2 
-flask==2.3.3
-langchain==0.1.13
-langchain-google-genai
-pinecone
-whatsapp-chatbot-python
-nest-asyncio==1.6.0
-google-generativeai==0.5.0
-asyncio==3.4.3
-python-dotenv==1.0.0
-gunicorn==21.2.0
-pysqlite3-binary
+#transformers
+#torch
+#requests
+#langchain-community==0.0.29   
+#pypdf 
+#tqdm==4.66.2 
+#flask==2.3.3
+#langchain==0.1.13
+#langchain-google-genai
+#pinecone
+#whatsapp-chatbot-python
+#nest-asyncio==1.6.0
+#google-generativeai==0.5.0
+#asyncio==3.4.3
+#python-dotenv==1.0.0
+#gunicorn==21.2.0
+#pysqlite3-binary
 #python==3.9
-email-validator
-gspread
+#email-validator
+#gspread
 #sqlite3
-pinecone-client
-google-auth
+#pinecone-client
+#google-auth
    
+
+
+
+
+# Core Framework
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Async Support
+nest-asyncio==1.5.8
+
+# Database
+pysqlite3==0.5.2
+pysqlite3-binary==0.5.2
+
+# AI and ML
+langchain==0.1.0
+langchain-google-genai==1.0.0
+google-generativeai==0.3.2
+pinecone-client==3.0.0
+
+# Google Services
+gspread==5.12.0
+google-auth==2.25.2
+google-auth-oauthlib==1.2.0
+google-auth-httplib2==0.2.0
+
+# Media Processing
+SpeechRecognition==3.10.0
+pydub==0.25.1
+Pillow==10.1.0
+PyAudio==0.2.14
+
+# HTTP and API
+requests==2.31.0
+urllib3==2.1.0
+
+# WhatsApp Integration
+whatsapp-chatbot-python==0.0.5
+
+# Utilities
+python-dotenv==1.0.0
+pytz==2023.3.post1
+
+# Optional: For better audio support
+ffmpeg-python==0.2.0
+scipy==1.11.4
