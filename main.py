@@ -41,12 +41,12 @@ app = Flask(__name__)
 
 # Configuration from environment
 CONFIG = {
-    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY", "your_key"),
-    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", "your_key"),
-    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", "your_id"),
-    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "your_token"),
+    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY", "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg"),
+    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw"),
+    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", "7105328354"),
+    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
     'SHEETS_CREDS': os.getenv("GOOGLE_SHEETS_CREDENTIALS", "credentials.json"),
-    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID", "your_id"),
+    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID", "116616118324951765726"),
     'DB_PATH': "ai_coach.db",
     'MAX_HISTORY': 20
 }
