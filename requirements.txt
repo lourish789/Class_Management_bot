@@ -40,10 +40,13 @@ google-auth
 #google-auth-httplib2==0.2.0
 
 # Media Processing
-SpeechRecognition==3.10.0
-pydub==0.25.1
-Pillow==10.1.0
-PyAudio==0.2.14
+SpeechRecognition
+#==3.10.0
+pydub
+#==0.25.1
+#Pillow==10.1.0
+PyAudio
+#==0.2.14
 
 # HTTP and API
 #urllib3==2.1.0
