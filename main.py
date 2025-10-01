@@ -438,6 +438,7 @@ def process_message(chat_id: str, message_data: Dict) -> str:
         # Update user activity
         db.save_user(chat_id)
         
+        
         # Extract intent and save user message
         intent = ai_coach._extract_intent(text_content)
         if media_type == 'text':
