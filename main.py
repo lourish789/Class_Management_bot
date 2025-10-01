@@ -71,8 +71,8 @@ try:
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash-exp",
         google_api_key=CONFIG['GOOGLE_API_KEY'],
-        temperature=0.5,
-        max_tokens=750
+        temperature=0.65,
+        max_tokens=1000
     )
     logger.info("AI services initialized successfully")
 except Exception as e:
