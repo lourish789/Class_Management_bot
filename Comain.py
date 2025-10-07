@@ -38,7 +38,7 @@ CONFIG = {
     'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw"),
     'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", "7105328354"),
     'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
-    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", ""),  # Your deployed Apps Script Web App URL
+    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbzNmrXYRGTv3FoGsHkBxCYFVnMnop62fih4-T-PZP1jzknlh9oewfU2LHYYGi8r0IE/exec"),  # Your deployed Apps Script Web App URL
     'DB_PATH': "ai_coach.db",
     'MAX_HISTORY': 20,
     'INDEX_NAME': 'coach'
