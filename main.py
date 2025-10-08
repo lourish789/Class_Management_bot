@@ -32,7 +32,7 @@ CONFIG = {
     'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
     'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbzNmrXYRGTv3FoGsHkBxCYFVnMnop62fih4-T-PZP1jzknlh9oewfU2LHYYGi8r0IE/exec"),
     'DB_PATH': "ai_coach.db",
-    'MAX_HISTORY': 25
+    'MAX_HISTORY': 25,
     'INDEX_NAME': 'coach'
 }
 
