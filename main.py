@@ -40,8 +40,8 @@ CONFIG = {
     'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
     'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbzNmrXYRGTv3FoGsHkBxCYFVnMnop62fih4-T-PZP1jzknlh9oewfU2LHYYGi8r0IE/exec"),
     'DB_PATH': "ai_coach.db",
-    'MAX_HISTORY': 20,
-    'INDEX_NAME': 'coach'
+    'MAX_HISTORY': 20
+  #  'INDEX_NAME': 'coach'
 }
 
 # Validate keys
@@ -65,8 +65,8 @@ try:
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash-exp",
         google_api_key=CONFIG['GOOGLE_API_KEY'],
-        temperature=0.5,
-        max_tokens=800
+        temperature=0.7,
+        max_tokens=1000
     )
     logger.info("AI services initialized successfully")
 except Exception as e:
@@ -306,9 +306,9 @@ class AICoach:
             # Build context from conversation history
             context = ""
             if history:
-                recent_context = history[-20:]
+                recent_context = history[-6:]
                 context = "\n".join([
-                    f"{'Teacher' if msg['message_type'] == 'user' else 'AI Coach'}: {msg['message_content'][:250]}"
+                    f"{'Teacher' if msg['message_type'] == 'user' else 'AI Coach'}: {msg['message_content'][:150]}"
                     for msg in recent_context
                 ])
             
