@@ -57,31 +57,11 @@ pinecone_index = None
 embed_model = None
 llm = None
 
+# Initialize Pinecone and embedding model with error handling
 try:
-    # Initialize Pinecone
     pc = Pinecone(api_key=CONFIG['PINECONE_API_KEY'])
-    
-    # List all indexes to check if 'coach' exists
-    try:
-        existing_indexes = pc.list_indexes()
-        index_names = [index['name'] for index in existing_indexes]
-        
-        if CONFIG['INDEX_NAME'] in index_names:
-            pinecone_index = pc.Index(CONFIG['INDEX_NAME'])
-            logger.info(f"Pinecone index '{CONFIG['INDEX_NAME']}' connected successfully")
-        else:
-            logger.warning(f"Pinecone index '{CONFIG['INDEX_NAME']}' not found. RAG features will be disabled.")
-            logger.info(f"Available indexes: {index_names}")
-    except Exception as e:
-        logger.error(f"Error checking Pinecone indexes: {e}")
-        logger.warning("Continuing without Pinecone RAG support")
-    
-    # Initialize Google AI services
-    embed_model = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001", 
-        google_api_key=CONFIG['GOOGLE_API_KEY']
-    )
-    
+    pinecone_index = pc.Index("coach")
+    embed_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=CONFIG['GOOGLE_API_KEY'])
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash-exp",
         google_api_key=CONFIG['GOOGLE_API_KEY'],
@@ -92,6 +72,52 @@ try:
 except Exception as e:
     logger.error(f"Service initialization error: {e}")
     raise
+
+
+    
+  #  logger.info("Pinecone and embeddings initialized successfully")
+    
+#except Exception as e:
+  #  logger.error(f"Error initializing Pinecone/Embeddings: {e}")
+  #  pinecone_index = None
+  #  embed_model = None
+    
+    
+#try:
+    # Initialize Pinecone
+    #pc = Pinecone(api_key=CONFIG['PINECONE_API_KEY'])
+    
+    # List all indexes to check if 'coach' exists
+    #try:
+        #existing_indexes = pc.list_indexes()
+       # index_names = [index['name'] for index in existing_indexes]
+        
+       # if CONFIG['INDEX_NAME'] in index_names:
+         #   pinecone_index = pc.Index(CONFIG['INDEX_NAME'])
+          #  logger.info(f"Pinecone index '{CONFIG['INDEX_NAME']}' connected successfully")
+      #  else:
+           # logger.warning(f"Pinecone index '{CONFIG['INDEX_NAME']}' not found. RAG features will be disabled.")
+          #  logger.info(f"Available indexes: {index_names}")
+   # except Exception as e:
+      #  logger.error(f"Error checking Pinecone indexes: {e}")
+      #  logger.warning("Continuing without Pinecone RAG support")
+    
+    # Initialize Google AI services
+   # embed_model = GoogleGenerativeAIEmbeddings(
+     #   model="models/embedding-001", 
+    #    google_api_key=CONFIG['GOOGLE_API_KEY']
+  #  )
+    
+ #   llm = ChatGoogleGenerativeAI(
+     #   model="gemini-2.0-flash-exp",
+      #  google_api_key=CONFIG['GOOGLE_API_KEY'],
+      #  temperature=0.5,
+     #   max_tokens=800
+ #   )
+  #  logger.info("AI services initialized successfully")
+#except Exception as e:
+ #   logger.error(f"Service initialization error: {e}")
+  #  raise
 
 
 class DatabaseManager:
