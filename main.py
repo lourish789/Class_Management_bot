@@ -60,11 +60,11 @@ try:
     existing_indexes = pc.list_indexes()
     existing_index_names = [index.name for index in existing_indexes.indexes]
     
-    if CONFIG['INDEX_NAME'] not in existing_index_names:
-        logger.warning(f"Pinecone index '{CONFIG['INDEX_NAME']}' not found. Please run the vector storage script first.")
+    if CONFIG['coach'] not in existing_index_names:
+        logger.warning(f"Pinecone index '{CONFIG['coach']}' not found. Please run the vector storage script first.")
         pinecone_index = None
     else:
-        pinecone_index = pc.Index(CONFIG['INDEX_NAME'])
+        pinecone_index = pc.Index(CONFIG['coach'])
         logger.info("Pinecone index connected successfully")
     
     embed_model = GoogleGenerativeAIEmbeddings(
@@ -269,9 +269,9 @@ class AICoach:
             # Build context from conversation history
             context = ""
             if history:
-                recent_context = history[-6:]
+                recent_context = history[-20:]
                 context = "\n".join([
-                    f"{'Teacher' if msg['message_type'] == 'user' else 'AI Coach'}: {msg['message_content'][:150]}"
+                    f"{'Teacher' if msg['message_type'] == 'user' else 'AI Coach'}: {msg['message_content'][:250]}"
                     for msg in recent_context
                 ])
             
