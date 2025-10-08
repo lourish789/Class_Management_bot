@@ -26,15 +26,26 @@ app = Flask(__name__)
 
 # Configuration
 CONFIG = {
-    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY", ""),
-    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", ""),
-    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", ""),
-    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", ""),
-    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", ""),
+    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY", "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg"),
+    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw"),
+    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", "7105328354"),
+    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
+    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbzNmrXYRGTv3FoGsHkBxCYFVnMnop62fih4-T-PZP1jzknlh9oewfU2LHYYGi8r0IE/exec"),
     'DB_PATH': "ai_coach.db",
-    'MAX_HISTORY': 20,
+    'MAX_HISTORY': 25
     'INDEX_NAME': 'coach'
 }
+
+#CONFIG = {
+  #  'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY", ""),
+ #   'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY", ""),
+  #  'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", ""),
+   # 'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", ""),
+  #  'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", ""),
+  #  'DB_PATH': "ai_coach.db",
+  #  'MAX_HISTORY': 20,
+  #  'INDEX_NAME': 'coach'
+#}
 
 # Validate required keys
 required_keys = ['PINECONE_API_KEY', 'GOOGLE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN']
