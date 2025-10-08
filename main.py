@@ -55,17 +55,18 @@ if not CONFIG['APPS_SCRIPT_URL']:
 # Initialize AI services
 try:
     pc = Pinecone(api_key=CONFIG['PINECONE_API_KEY'])
+    pinecone_index = pc.index("coach")
     
     # Check if index exists
-    existing_indexes = pc.list_indexes()
-    existing_index_names = [index.name for index in existing_indexes.indexes]
+    #existing_indexes = pc.list_indexes()
+    #existing_index_names = [index.name for index in existing_indexes.indexes]
     
-    if CONFIG['coach'] not in existing_index_names:
-        logger.warning(f"Pinecone index '{CONFIG['coach']}' not found. Please run the vector storage script first.")
-        pinecone_index = None
-    else:
-        pinecone_index = pc.Index(CONFIG['coach'])
-        logger.info("Pinecone index connected successfully")
+    #if CONFIG['coach'] not in existing_index_names:
+       # logger.warning(f"Pinecone index '{CONFIG['coach']}' not found. Please run the vector storage script first.")
+    #    pinecone_index = None
+    #else:
+      #  pinecone_index = pc.Index(CONFIG['coach'])
+       # logger.info("Pinecone index connected successfully")
     
     embed_model = GoogleGenerativeAIEmbeddings(
         model="models/embedding-001", 
