@@ -291,6 +291,172 @@ class ResponseFormatter:
         
         return result.strip()
 
+class EnhancedTeacherAI:
+    """Enhanced AI with registration flow and personalization"""
+    
+    def __init__(self, llm, embed_model, pinecone_index, db_manager):
+        self.llm = llm
+        self.embed_model = embed_model
+        self.pinecone_index = pinecone_index
+        self.db_manager = db_manager
+        self.analyzer = ConversationAnalyzer()
+        
+        # Enhanced system prompt with welcome back functionality
+        self.system_prompt_template = """
+        You are Coach bot, an experienced and empathetic AI teaching assistant for Nigerian teachers.
+        
+        Your responsibilities:
+        1. Provide practical teaching advice tailored to Nigerian classrooms
+        2. Consider local challenges: large classes, limited resources, power issues
+        3. Maintain cultural sensitivity and knowledge of Nigerian education
+        4. Offer emotional support while remaining professional
+        5. Use conversation history for personalized, contextual responses
+        6. Reference previous conversations naturally with phrases like "welcome back", "as we discussed before"
+        
+        User Information:
+        - First Name: {first_name}
+        - Location: {location}
+        - Teaching Class: {class_taught}
+        - Conversation Context: {conversation_context}
+        - Total Previous Messages: {total_messages}
+        
+        Relevant Information:
+        {rag_content}
+        
+        Recent Conversation Summary:
+        {conversation_summary}
+        
+        Guidelines:
+        - Always use the user's first name when appropriate
+        - Reference previous conversations when relevant
+        - For returning users, use welcoming phrases like "Welcome back [name]!"
+        - Keep responses practical and Nigeria-focused
+        - Be encouraging and supportive
+        """
+    
+    def get_rag_content(self, user_message: str, intent: str = None) -> Tuple[str, List[str]]:
+        """Get relevant content from Pinecone with source tracking"""
+        try:
+            enhanced_query = user_message
+            if intent:
+                enhanced_query = f"{intent} {user_message}"
+            
+            query_embed = self.embed_model.embed_query(enhanced_query)
+            query_embed = [float(val) for val in query_embed]
+
+            results = self.pinecone_index.query(
+                vector=query_embed,
+                top_k=5,
+                include_values=False,
+                include_metadata=True
+            )
+
+            doc_contents = []
+            sources = []
+            
+            for match in results.get('matches', []):
+                if match.get('score', 0) > 0.7:
+                    text = match['metadata'].get('text', '')
+                    source = match['metadata'].get('source', f"Document {match.get('id', 'Unknown')}")
+                    
+                    if text:
+                        doc_contents.append(f"From {source}: {text}")
+                        sources.append(source)
+
+            return "\n\n".join(doc_contents) if doc_contents else "No relevant information found.", sources
+        
+        except Exception as e:
+            logger.error(f"Error getting RAG content: {e}")
+            return "No relevant information found.", []
+    
+    def create_conversation_summary(self, history: List[Dict], limit: int = 6) -> str:
+        """Create a concise summary of recent conversation"""
+        if not history:
+            return "This is a new conversation."
+        
+        recent_messages = history[-limit:]
+        summary_parts = []
+        
+        for entry in recent_messages:
+            role = "Teacher" if entry['message_type'] == 'user' else "Coach bot"
+            content = entry['message_content'][:100] + "..." if len(entry['message_content']) > 100 else entry['message_content']
+            summary_parts.append(f"{role}: {content}")
+        
+        return "\n".join(summary_parts)
+    
+    def generate_response(self, user_message: str, user_profile: Dict, 
+                         conversation_history: List[Dict]) -> Tuple[str, str, List[str]]:
+        """Generate contextual response with personalization"""
+        try:
+            intent = self.analyzer.extract_intent(user_message)
+            context = self.analyzer.analyze_conversation_context(conversation_history)
+            rag_content, sources = self.get_rag_content(user_message, intent)
+            conversation_summary = self.create_conversation_summary(conversation_history)
+            
+            # Prepare welcome back message for returning users
+            welcome_phrase = ""
+            if user_profile.get('total_messages', 0) > 1 and context['context'] != 'early_conversation':
+                if user_profile.get('first_name'):
+                    welcome_phrase = f"Welcome back, {user_profile['first_name']}! "
+                else:
+                    welcome_phrase = "Welcome back! "
+            
+            enhanced_prompt = self.system_prompt_template.format(
+                first_name=user_profile.get('first_name', 'Teacher'),
+                location=user_profile.get('location', 'Nigeria'),
+                class_taught=user_profile.get('class_taught', 'your class'),
+                conversation_context=context,
+                total_messages=user_profile.get('total_messages', 0),
+                rag_content=rag_content,
+                conversation_summary=conversation_summary
+            )
+            
+            messages = [
+                {"role": "system", "content": enhanced_prompt},
+                {"role": "user", "content": f"Current question: {user_message}"}
+            ]
+            
+            response = self.llm.invoke(messages)
+            ai_response = response.content.strip()
+            
+            # Clean response and add welcome phrase if appropriate
+            ai_response = ai_response.replace("*", "").strip()
+            if welcome_phrase and not ai_response.lower().startswith(('hi', 'hello', 'welcome')):
+                ai_response = welcome_phrase + ai_response
+            
+            # Add contextual elements
+            if context['context'] == 'support_needed':
+                ai_response += "\n\nRemember, self-care is essential for effective teaching. You're doing important work!"
+            
+            return ai_response, intent, sources
+            
+        except Exception as e:
+            logger.error(f"Error generating AI response: {e}")
+            return ("I'm having trouble right now. Please try again in a moment."), "error", []
+
+       
+    @staticmethod
+    def _extract_intent(message: str) -> str:
+        """Extract intent from message"""
+        msg = message.lower()
+        
+        intents = {
+            'teaching_strategy': ['teach', 'strategy', 'method', 'lesson', 'explain', 'introduce', 'activity', 'engage'],
+            'classroom_management': ['discipline', 'behavior', 'manage', 'control', 'disruptive', 'noise', 'attention'],
+            'assessment': ['assess', 'evaluate', 'grade', 'test', 'exam', 'mark', 'feedback', 'progress'],
+            'wellbeing': ['stress', 'tired', 'overwhelmed', 'burnout', 'exhausted', 'frustrated', 'difficult'],
+            'curriculum': ['curriculum', 'syllabus', 'topic', 'subject', 'scheme of work'],
+            'parent_communication': ['parent', 'guardian', 'meeting', 'report'],
+            'resources': ['resource', 'material', 'tool', 'equipment', 'aid']
+        }
+        
+        for intent_name, keywords in intents.items():
+            if any(kw in msg for kw in keywords):
+                return intent_name
+        
+        return 'general'
+                             
+
 
 class AICoach:
     """AI Coach with RAG and context awareness"""
@@ -380,7 +546,7 @@ class AICoach:
         
         prompt = f"""You are AI Coach by Schoolinka, helping Nigerian teachers excel in their profession.
 
-TEACHER PROFILE:
+    TEACHER PROFILE:
 - Name: {name}
 - Teaching: {class_info}
 - Location: {location}
