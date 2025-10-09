@@ -445,13 +445,13 @@ CORE GUIDELINES:
         
         return 'general'
     
-    @staticmethod
-    def _get_fallback_response(intent: str) -> str:
-        """Fallback response on error"""
-        return (
-            "I'm experiencing a brief technical issue.\n\n"
-            "Please try asking your question again, and I'll do my best to help you."
-        )
+   # @staticmethod
+    #def _get_fallback_response(intent: str) -> str:
+     #   """Fallback response on error"""
+   #     return (
+     #       "I'm experiencing a brief technical issue.\n\n"
+    #        "Please try asking your question again, and I'll do my best to help you."
+   #     )
 
 
 def log_to_google_sheets(data_type: str, data: Dict) -> bool:
