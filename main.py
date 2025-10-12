@@ -71,9 +71,9 @@ try:
     )
     
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-exp",
+        model="gemini-2.5-flash",
         google_api_key=CONFIG['GOOGLE_API_KEY'],
-        temperature=0.7,
+        temperature=0.5,
         max_tokens=1500
     )
     logger.info("✓ Google AI services initialized")
@@ -411,6 +411,8 @@ class AICoach:
         DETECTED INTENT: {intent}
 
         CORE GUIDELINES:
+        This chatbot is a product of schoolinka. Schoolinka was founded by Oluwaseun Kayode. Schoolinka is an integrated online platform designed to offer training courses, certifications, and teaching resources for educators, while also providing a job board for teachers seeking opportunities in renowned schools worldwide.
+        Try to explain about the company if a user asks. For more information, refer the user to the Schoolinka web link: https://www.schoolinka.com/
         1. RESPONSE STYLE:
            - Be warm, conversational, and encouraging
            - Do not call the users's name all the time when responding. 
