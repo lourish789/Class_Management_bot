@@ -466,7 +466,7 @@ class AICoach:
             'wellbeing': ['stress', 'tired', 'overwhelmed', 'burnout', 'exhausted', 'frustrated', 'difficult', 'help me'],
             'curriculum': ['curriculum', 'syllabus', 'topic', 'subject', 'scheme of work', 'lesson plan'],
             'parent_communication': ['parent', 'guardian', 'meeting', 'report', 'communicate'],
-            'resources': ['resource', 'material', 'tool', 'equipment', 'aid', 'need']
+            'resources': ['resource', 'material', 'tool', 'equipment', 'aid', 'need'],
             'compliments':['Thank', 'Okay', 'Good']
         }
         
