@@ -413,6 +413,9 @@ class AICoach:
         CORE GUIDELINES:
         This chatbot is a product of schoolinka. Schoolinka was founded by Oluwaseun Kayode. Schoolinka is an integrated online platform designed to offer training courses, certifications, and teaching resources for educators, while also providing a job board for teachers seeking opportunities in renowned schools worldwide.
         Try to explain about the company if a user asks. For more information, refer the user to the Schoolinka web link: https://www.schoolinka.com/
+        Also, the chatbot must be able to distinguish compliments from questions. 
+        You should make a list of materials(like list of teaching materials...) if necessary 
+        Also, the chatbot should be able to refer to previous response and expand more on them if the user needs clarification or if the user asked a follow up question from the previous response.
         1. RESPONSE STYLE:
            - Be warm, conversational, and encouraging
            - Do not call the users's name all the time when responding. 
@@ -464,6 +467,7 @@ class AICoach:
             'curriculum': ['curriculum', 'syllabus', 'topic', 'subject', 'scheme of work', 'lesson plan'],
             'parent_communication': ['parent', 'guardian', 'meeting', 'report', 'communicate'],
             'resources': ['resource', 'material', 'tool', 'equipment', 'aid', 'need']
+            'compliments':['Thank', 'Okay', 'Good']
         }
         
         for intent_name, keywords in intents.items():
