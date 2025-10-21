@@ -902,6 +902,7 @@ def process_message(phone_number: str, chat_id: str, text_message: str,
     except Exception as e:
         logger.error(f"Message processing error: {e}", exc_info=True)
         return "I'm experiencing technical difficulties. Please try again in a moment."
+        
 
 
 # ============================================================================
