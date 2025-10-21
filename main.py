@@ -1,9 +1,3 @@
-"""
-AI Coach by Schoolinka - Enhanced Production WhatsApp Chatbot
-A professional teaching assistant for Nigerian educators
-Version: 5.1 - Improved & Optimized
-"""
-
 import os
 import time
 import re
