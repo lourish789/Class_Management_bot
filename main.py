@@ -32,7 +32,7 @@ CONFIG = {
     'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE", "7105328354"),
     'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN", "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
     'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL", "https://script.google.com/macros/s/AKfycbzNmrXYRGTv3FoGsHkBxCYFVnMnop62fih4-T-PZP1jzknlh9oewfU2LHYYGi8r0IE/exec"),
-    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID", ""),  # Add your spreadsheet ID here
+    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID", "1H8HKj8sIdD8mPEsR8x32qIprEa_jr6UDfdUU50IjkHk"),  # Add your spreadsheet ID here
     'DB_PATH': "/opt/render/project/src/ai_coach.db",  # Persistent path on Render
     'MAX_HISTORY': 25,
     'INDEX_NAME': 'coach'
