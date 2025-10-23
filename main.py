@@ -886,7 +886,8 @@ def handle_registration(phone_number: str, chat_id: str, text: str, user: Option
             return "Please enter a valid name."
     
     elif step == 1:
-        if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}, text.lower()):
+        if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', text.lower()):
+        #if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}, text.lower()):
             db.save_user(phone_number, email=text.lower(), registration_step=2)
             name = user.get('first_name', 'Teacher')
             next_msg = REGISTRATION_STEPS[2]["message"].format(first_name=name)
