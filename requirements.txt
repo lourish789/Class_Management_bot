@@ -20,7 +20,6 @@ gspread
 #sqlite3
 pinecone-client
 google-auth
-threading
 psycopg2
 pydub
 Pillow
