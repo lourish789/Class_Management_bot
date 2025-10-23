@@ -40,6 +40,23 @@ CONFIG = {
     'INDEX_NAME': 'coach'
 }
 
+#import os
+
+# Get the database URL from the environment variable
+# Your application should now look for the DATABASE_URL environment variable
+#DATABASE_URL = os.environ.get("DATABASE_URL")
+
+#if DATABASE_URL:
+    # Configure your database connection with the URL
+    # Example using SQLAlchemy
+    # app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+#    pass
+#else:
+    # This block might be used for local testing with a temporary database
+   # print("DATABASE_URL environment variable is not set. Using local database.")
+ #   pass
+    
+
 # Validate required keys
 required_keys = ['PINECONE_API_KEY', 'GOOGLE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN', 'DATABASE_URL']
 missing_keys = [key for key in required_keys if not CONFIG[key]]
