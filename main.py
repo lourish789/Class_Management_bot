@@ -903,8 +903,7 @@ def handle_registration(phone_number: str, chat_id: str, text: str, user: Option
             return "Please enter a valid name."
     
     elif step == 1:
-        if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', text.lower()):
-        #if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}, text.lower()):
+        if '@' in text and '.' in text and re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', text.lower()):
             db.save_user(phone_number, email=text.lower(), registration_step=2)
             name = user.get('first_name', 'Teacher')
             next_msg = REGISTRATION_STEPS[2]["message"].format(first_name=name)
@@ -923,20 +922,35 @@ def handle_registration(phone_number: str, chat_id: str, text: str, user: Option
     
     elif step == 3:
         if len(text) > 1:
+            # Save the class and mark profile as complete
             db.save_user(phone_number, class_taught=text.title(), profile_complete=True, registration_step=4)
             
-            # Log to sheets SYNCHRONOUSLY (blocking) for critical registration data
+            # CRITICAL FIX: Fetch the updated user data from database
+            phone = re.sub(r'\D', '', phone_number)
+            updated_user = db.get_user_by_phone(phone)
+            
+            if not updated_user:
+                logger.error(f"Failed to retrieve user after registration: {phone}")
+                return "Registration completed, but there was an issue. Please try again."
+            
+            # Log to sheets SYNCHRONOUSLY with complete user data
             user_data = {
-                'phone_number': phone_number,
-                'name': user.get('first_name', ''),
-                'email': user.get('email', ''),
-                'location': user.get('location', ''),
-                'class': text.title(),
+                'phone_number': phone,
+                'name': updated_user.get('first_name', ''),
+                'email': updated_user.get('email', ''),
+                'location': updated_user.get('location', ''),
+                'class': updated_user.get('class_taught', ''),
                 'status': 'Registered',
                 'registration_date': datetime.now().isoformat()
             }
             
-            sheets_logger.log_user_registration(user_data)
+            # Log to Google Sheets
+            success = sheets_logger.log_user_registration(user_data)
+            
+            if success:
+                logger.info(f"✓ User {phone} registered and logged to sheets successfully")
+            else:
+                logger.warning(f"User {phone} registered but sheets logging failed - will retry in background")
             
             welcome_msg = (
                 f"Excellent! Your profile is complete.\n\n"
@@ -955,6 +969,10 @@ def handle_registration(phone_number: str, chat_id: str, text: str, user: Option
             return "Please enter the class you teach."
     
     return "Something went wrong. Please try again."
+
+
+
+
 
 
 # Initialize components
