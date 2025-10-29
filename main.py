@@ -29,13 +29,13 @@ app = Flask(__name__)
 
 # Configuration
 CONFIG = {
-    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY"), #, "pcsk_zRyjS_2FyS6uk3NsKW9AHPzDvvQPzANF2S3B67MS6UZ7ax6tnJfmCbLiYXrEcBJFHzcHg"),
-    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY"), #, "AIzaSyB3N9BHeIWs_8sdFK76PU-v9N6prcIq2Hw"),
-    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE"), #, "7105328354"),
-    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN"), #, "2a33db828fe64c57a32debcca8f065cac2f901d270d04347a5"),
-    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL"), #, "https://script.google.com/macros/s/AKfycbwpz7zeTVd0IwEtAIxT80LCQu9_ifQ248_X_uqnqQwVZHQ-j-_9DuiHFAPQA3vO6tqM/exec"),
-    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID"), #, "1br8bPoH39yUrJtFPV3kesTcfnf7eD2TQnsZ0SLI5vlE"),
-    'DATABASE_URL': os.getenv("DATABASE_URL"),  # Render provides this automatically
+    'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY"),
+    'GOOGLE_API_KEY': os.getenv("GOOGLE_API_KEY"), 
+    'GREEN_API_ID': os.getenv("GREEN_API_ID_INSTANCE"), 
+    'GREEN_API_TOKEN': os.getenv("GREEN_API_TOKEN"), 
+    'APPS_SCRIPT_URL': os.getenv("APPS_SCRIPT_URL"), 
+    'SPREADSHEET_ID': os.getenv("SPREADSHEET_ID"), 
+    'DATABASE_URL': os.getenv("DATABASE_URL"),  
     'MAX_HISTORY': 25,
     'INDEX_NAME': 'coach'
 }
