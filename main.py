@@ -65,6 +65,7 @@ if missing_keys:
     logger.error(f"Missing required configuration: {', '.join(missing_keys)}")
     raise ValueError(f"Missing required environment variables: {', '.join(missing_keys)}")
 
+
 # Initialize AI services
 pinecone_index = None
 embed_model = None
