@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+#https://script.google.com/macros/s/AKfycbzY3F1D0KmOqg-tkBkawoFhrlWB5X3n6cQcF9Uzpfn21DCdfIzrlYTuEOoY8Sd3pUtj9g/exec
 # Configuration
 CONFIG = {
     'PINECONE_API_KEY': os.getenv("PINECONE_API_KEY"),
