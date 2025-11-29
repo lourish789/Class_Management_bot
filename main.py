@@ -19,7 +19,6 @@ import json
 from queue import Queue
 import uuid
 
-
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
