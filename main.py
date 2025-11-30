@@ -43,6 +43,7 @@ CONFIG = {
     'INDEX_NAME': 'coach',
     'MEMORY_DAYS': 90  # 90-day memory before re-verification
 }
+APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwy5-axnmwpvEe3T1EcOehaOYkNb9TsPbSvu0DW4LhL8zPpKpu7FIgshL6meDHX7gQ0vA/exec"
 
 # Validate required keys
 required_keys = ['PINECONE_API_KEY', 'GOOGLE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN', 'DATABASE_URL']
