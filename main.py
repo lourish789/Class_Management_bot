@@ -46,6 +46,7 @@ CONFIG = {
     'MAX_TOKENS': 1200  # Reduced from 1500 for faster responses
 }
 
+# https://script.google.com/macros/s/AKfycbyMWXN4p7VdAjG5RI2xLA8B43kRCq6LEux28I_EKLIjJkkjF9RsWXXtxhqBmvEle8BF/exec
 # Validate required keys
 required_keys = ['PINECONE_API_KEY', 'GOOGLE_API_KEY', 'GREEN_API_ID', 'GREEN_API_TOKEN', 'DATABASE_URL']
 missing_keys = [key for key in required_keys if not CONFIG[key]]
