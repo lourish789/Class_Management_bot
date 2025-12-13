@@ -50,7 +50,7 @@ services:
         sync: false
       - key: DATABASE_URL
         fromDatabase:
-          name: linka-ai-db
+          name: database_gk9k
           property: connectionString
       - key: PORT
         value: 10000
@@ -65,8 +65,8 @@ services:
       targetMemoryPercent: 80
 
 # Optional: PostgreSQL database
-#databases:
- # - name: linka-ai-db
- #   databaseName: linka_ai
-  #  plan: free  # or free
-  #  region: oregon
+databases:
+  - name: Database
+    databaseName: database_gk9k
+    plan: free  # or free
+    region: oregon
