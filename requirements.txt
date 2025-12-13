@@ -1,19 +1,19 @@
 transformers
 torch
 requests
-langchain-community==0.0.29   
+langchain-community
 pypdf 
-tqdm==4.66.2 
-flask==2.3.3
-langchain==0.1.13
+tqdm
+flask
+langchain
 langchain-google-genai
 pinecone
 whatsapp-chatbot-python
-nest-asyncio==1.6.0
-google-generativeai==0.5.0
+nest-asyncio
+google-generativeai
 asyncio==3.4.3
-python-dotenv==1.0.0
-gunicorn==21.2.0
+python-dotenv
+gunicorn
 pysqlite3-binary
 email-validator
 gspread
@@ -24,3 +24,5 @@ psycopg2
 pydub
 Pillow
 
+
+psycopg2-binary
