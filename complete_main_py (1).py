@@ -771,4 +771,272 @@ def process_and_respond_optimized(phone: str, chat_id: str, text: str):
             else:
                 history = history_cache.get(user_id)
                 if not history:
-                    history = db.get_history(user_id, limit=CONFIG['MAX_HISTORY
+                    history = db.get_history(user_id, limit=CONFIG['MAX_HISTORY'])
+                    history_cache.set(user_id, history)
+                
+                response, intent = linka_ai.generate_response(text, user, history)
+                
+                executor.submit(log_conversation_async, user_id, phone, text, response, intent, user)
+        
+        send_whatsapp_message(chat_id, response)
+        
+    except Exception as e:
+        logger.error(f"Process error: {e}")
+        send_whatsapp_message(chat_id, "I'm experiencing technical difficulties. Please try again.")
+
+
+# Initialize components
+db = DatabaseManager(CONFIG['DATABASE_URL'])
+sheets_logger = SheetsLogger(CONFIG['APPS_SCRIPT_URL'])
+linka_ai = LinkaAI(llm, embed_model, pinecone_index)
+
+# Initialize caches with limits
+user_cache = SimpleCache(ttl=CONFIG['CACHE_TTL_USER'], max_size=CONFIG['MAX_CACHE_SIZE'])
+history_cache = SimpleCache(ttl=CONFIG['CACHE_TTL_HISTORY'], max_size=CONFIG['MAX_CACHE_SIZE'])
+
+
+def send_whatsapp_message(phone: str, message: str) -> bool:
+    """Send message via Green API"""
+    for attempt in range(2):
+        try:
+            url = f"https://api.green-api.com/waInstance{CONFIG['GREEN_API_ID']}/sendMessage/{CONFIG['GREEN_API_TOKEN']}"
+            response = requests.post(
+                url,
+                json={"chatId": phone, "message": message},
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                logger.info(f"✓ Sent to {phone[:10]}...")
+                return True
+        except Exception as e:
+            logger.error(f"Send error: {e}")
+        
+        if attempt < 1:
+            time.sleep(0.2)
+    return False
+
+
+# Keep-alive endpoint for free tier
+last_activity = time.time()
+
+def update_activity():
+    global last_activity
+    last_activity = time.time()
+
+@app.before_request
+def before_request():
+    update_activity()
+
+
+# Flask Routes
+
+@app.route('/')
+def health():
+    return jsonify({
+        "status": "healthy",
+        "service": "LINKA AI",
+        "version": "7.0-free",
+        "tier": "free",
+        "features": [
+            "Instant response",
+            "Memory-efficient caching",
+            "Async logging",
+            "Optimized for 512MB RAM"
+        ],
+        "cache_stats": {
+            "users_cached": user_cache.size(),
+            "histories_cached": history_cache.size()
+        },
+        "timestamp": datetime.now().isoformat()
+    })
+
+
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    """ULTRA-FAST webhook optimized for free tier"""
+    try:
+        data = request.get_json()
+        
+        if not data or data.get('typeWebhook') != 'incomingMessageReceived':
+            return jsonify({"status": "ignored"}), 200
+        
+        message_data = data.get('messageData', {})
+        sender_data = data.get('senderData', {})
+        chat_id = sender_data.get('chatId', '').strip()
+        
+        if not chat_id or '@g.us' in chat_id:
+            return jsonify({"status": "ignored"}), 200
+        
+        phone = extract_phone_number(chat_id)
+        
+        text = None
+        if 'textMessageData' in message_data:
+            text = message_data['textMessageData'].get('textMessage', '').strip()
+        elif 'extendedTextMessageData' in message_data:
+            text = message_data['extendedTextMessageData'].get('text', '').strip()
+        
+        if not text:
+            executor.submit(send_whatsapp_message, chat_id, "I can only respond to text messages.")
+            return jsonify({"status": "non_text"}), 200
+        
+        logger.info(f"📨 Received from {phone[:10]}: {text[:30]}")
+        
+        executor.submit(process_and_respond_optimized, phone, chat_id, text)
+        
+        return jsonify({"status": "accepted"}), 200
+        
+    except Exception as e:
+        logger.error(f"Webhook error: {e}")
+        return jsonify({"status": "error"}), 500
+
+
+@app.route('/ping', methods=['GET'])
+def ping():
+    """Keep-alive endpoint for free tier to prevent sleep"""
+    return jsonify({
+        "status": "alive",
+        "uptime_seconds": int(time.time() - last_activity),
+        "timestamp": datetime.now().isoformat()
+    }), 200
+
+
+@app.route('/test', methods=['POST'])
+def test():
+    """Test endpoint"""
+    try:
+        data = request.get_json()
+        phone = data.get('phone_number', '2348012345678')
+        chat_id = data.get('chat_id', f'{phone}@c.us')
+        message = data.get('message', 'Hello')
+        
+        user = user_cache.get(phone)
+        if not user:
+            user = db.get_user_by_phone(phone)
+            if user:
+                user_cache.set(phone, user)
+        
+        if not user or not user.get('profile_complete'):
+            response = handle_registration_quick(phone, chat_id, message, user)
+        else:
+            history = history_cache.get(user['user_id']) or db.get_history(user['user_id'])
+            response, intent = linka_ai.generate_response(message, user, history)
+        
+        return jsonify({
+            "response": response,
+            "user": dict(user) if user else None,
+            "cached": user_cache.get(phone) is not None,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Test error: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/stats', methods=['GET'])
+def stats():
+    """Get chatbot statistics"""
+    try:
+        with db.get_conn() as conn:
+            with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                cur.execute('SELECT COUNT(*) as total FROM users')
+                total = cur.fetchone()['total']
+                
+                cur.execute('SELECT COUNT(*) as registered FROM users WHERE profile_complete = TRUE')
+                registered = cur.fetchone()['registered']
+                
+                cur.execute('SELECT COUNT(*) as total FROM conversations')
+                messages = cur.fetchone()['total']
+        
+        return jsonify({
+            "chatbot": "LINKA AI",
+            "tier": "free",
+            "stats": {
+                "total_users": total,
+                "registered_users": registered,
+                "total_messages": messages
+            },
+            "cache": {
+                "users_cached": user_cache.size(),
+                "histories_cached": history_cache.size(),
+                "max_cache_size": CONFIG['MAX_CACHE_SIZE']
+            },
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/health_check', methods=['GET'])
+def health_check():
+    """Health check for monitoring"""
+    components = {
+        "database": False,
+        "google_ai": False,
+        "green_api": False,
+        "sheets": False
+    }
+    
+    try:
+        with db.get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute('SELECT 1')
+                components["database"] = True
+    except:
+        pass
+    
+    components["google_ai"] = llm is not None
+    components["green_api"] = bool(CONFIG['GREEN_API_ID'])
+    components["sheets"] = bool(CONFIG['APPS_SCRIPT_URL'])
+    
+    all_healthy = all(components.values())
+    
+    return jsonify({
+        "status": "healthy" if all_healthy else "degraded",
+        "chatbot": "LINKA AI v7.0 FREE",
+        "tier": "free (512MB RAM)",
+        "components": components,
+        "optimizations": {
+            "response_mode": "instant",
+            "caching": "size-limited",
+            "logging": "async",
+            "workers": CONFIG['THREAD_WORKERS'],
+            "db_pool": f"{CONFIG['DB_POOL_MIN']}-{CONFIG['DB_POOL_MAX']}"
+        },
+        "cache_stats": {
+            "user_cache_size": user_cache.size(),
+            "history_cache_size": history_cache.size(),
+            "max_cache_size": CONFIG['MAX_CACHE_SIZE']
+        },
+        "timestamp": datetime.now().isoformat()
+    }), 200 if all_healthy else 503
+
+
+@app.route('/cache/clear', methods=['POST'])
+def clear_cache():
+    """Clear all caches"""
+    try:
+        user_cache.clear()
+        history_cache.clear()
+        return jsonify({
+            "status": "success",
+            "message": "All caches cleared",
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+if __name__ == "__main__":
+    logger.info("=" * 70)
+    logger.info("LINKA AI v7.0 - FREE TIER OPTIMIZED")
+    logger.info("=" * 70)
+    logger.info("✓ Memory: 512MB RAM optimized")
+    logger.info("✓ Cache: Size-limited (50 items)")
+    logger.info("✓ DB Pool: 1-5 connections")
+    logger.info("✓ Workers: 8 threads")
+    logger.info("✓ Response: <2 seconds")
+    logger.info("=" * 70)
+    
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=False, threaded=True)</parameter>
