@@ -21,6 +21,10 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 import signal
 
+
+#https://script.google.com/macros/s/AKfycbwjgHvpYDZHmdDZJDXvc2VFe8YGADI7GCJbJw0cvzir87cHy3xxCOX-yxh0rVdEsEbo/exec
+#AKfycbwjgHvpYDZHmdDZJDXvc2VFe8YGADI7GCJbJw0cvzir87cHy3xxCOX-yxh0rVdEsEbo
+#https://docs.google.com/spreadsheets/d/1H8HKj8sIdD8mPEsR8x32qIprEa_jr6UDfdUU50IjkHk/edit
 # Logging setup
 logging.basicConfig(
     level=logging.INFO,
